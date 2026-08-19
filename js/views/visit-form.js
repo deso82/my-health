@@ -69,24 +69,26 @@ export async function renderVisitForm(container, visitId, searchParams) {
         <div class="field">
           <label for="v-doctor">Doctor / Practitioner name</label>
           <input class="input" id="v-doctor" name="doctorName" type="text"
-            placeholder="e.g. Dr. Smith" value="${esc(existing?.doctorName ?? '')}">
+            placeholder="e.g. Dr. Smith" maxlength="200" value="${esc(existing?.doctorName ?? '')}">
         </div>
 
         <div class="field">
           <label for="v-location">Clinic / Hospital</label>
           <input class="input" id="v-location" name="location" type="text"
-            placeholder="e.g. City Medical Centre" value="${esc(existing?.location ?? '')}">
+            placeholder="e.g. City Medical Centre" maxlength="200" value="${esc(existing?.location ?? '')}">
         </div>
 
         <div class="field">
           <label for="v-advice">Doctor's advice &amp; notes *</label>
           <textarea class="textarea" id="v-advice" name="advice" style="min-height:140px"
+            maxlength="5000"
             placeholder="Write the doctor's recommendations, diagnoses, prescriptions…">${esc(existing?.advice ?? '')}</textarea>
         </div>
 
         <div class="field">
           <label for="v-notes">Personal notes</label>
           <textarea class="textarea" id="v-notes" name="notes"
+            maxlength="2000"
             placeholder="Your own observations, follow-up reminders…">${esc(existing?.notes ?? '')}</textarea>
         </div>
 
@@ -208,7 +210,16 @@ export async function renderVisitForm(container, visitId, searchParams) {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!selectedPerson) { showToast('Please select a person'); return; }
+
     const fd = new FormData(e.target);
+
+    // JS-side date validation — the HTML `max` attribute is bypassable via DevTools.
+    const dateVal = fd.get('date');
+    if (!dateVal) { showToast('Date is required'); return; }
+    const visitDate = new Date(dateVal + 'T00:00:00'); // local-time parse to avoid UTC-offset issues
+    const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999);
+    if (visitDate > endOfToday) { showToast('Visit date cannot be in the future'); return; }
+
     const btn = container.querySelector('#v-save');
     btn.disabled = true;
     btn.textContent = 'Saving…';

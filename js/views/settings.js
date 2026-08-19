@@ -1,5 +1,45 @@
 import { exportAll, importAll } from '../db.js';
 import { navigate, showToast } from '../app.js';
+import { esc } from '../utils.js';
+
+/**
+ * Validate a parsed backup object before importing it.
+ * Throws a descriptive Error on any schema violation.
+ * @param {unknown} data
+ */
+function validateBackup(data) {
+  if (typeof data !== 'object' || data === null) throw new Error('Invalid backup file — not a JSON object.');
+  if (data.version !== 1) throw new Error(`Unsupported backup version (got ${data.version}, expected 1).`);
+  if (!Array.isArray(data.people))  throw new Error("Missing or invalid 'people' array.");
+  if (!Array.isArray(data.visits))  throw new Error("Missing or invalid 'visits' array.");
+  if (data.photos !== undefined && !Array.isArray(data.photos)) throw new Error("Invalid 'photos' field — must be an array.");
+
+  const personIds = new Set();
+  for (const p of data.people) {
+    if (typeof p.id !== 'string' || p.id.trim() === '')   throw new Error('A person entry is missing a valid id.');
+    if (typeof p.name !== 'string' || p.name.trim() === '') throw new Error('A person entry is missing a valid name.');
+    if (p.id.length > 200)   throw new Error(`Person id too long: "${p.id.slice(0, 40)}…"`);
+    if (p.name.length > 200) throw new Error(`Person name too long: "${p.name.slice(0, 40)}…"`);
+    personIds.add(p.id);
+  }
+
+  const today = new Date(); today.setHours(23, 59, 59, 999);
+  for (const v of data.visits) {
+    if (typeof v.id !== 'string' || v.id.trim() === '')         throw new Error('A visit entry is missing a valid id.');
+    if (typeof v.personId !== 'string' || v.personId.trim() === '') throw new Error('A visit entry is missing a valid personId.');
+    if (typeof v.date !== 'string')                              throw new Error('A visit entry is missing a date field.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v.date))                   throw new Error(`Visit has invalid date format: "${v.date}".`);
+    if (new Date(v.date + 'T00:00:00') > today)                 throw new Error(`Visit date is in the future: "${v.date}".`);
+    if (!personIds.has(v.personId))                             throw new Error(`Visit references unknown person id: "${v.personId}".`);
+  }
+
+  if (Array.isArray(data.photos)) {
+    for (const ph of data.photos) {
+      if (typeof ph.id !== 'string' || ph.id.trim() === '')       throw new Error('A photo entry is missing a valid id.');
+      if (typeof ph.visitId !== 'string' || ph.visitId.trim() === '') throw new Error('A photo entry is missing a valid visitId.');
+    }
+  }
+}
 
 export async function renderSettings(container) {
   let storageText = 'Calculating…';
@@ -98,12 +138,13 @@ export async function renderSettings(container) {
     reader.onload = async ev => {
       try {
         const data = JSON.parse(ev.target.result);
+        validateBackup(data);       // schema check before touching the DB
         await importAll(data);
         showToast('Backup restored — reloading…');
         setTimeout(() => location.reload(), 1000);
       } catch (err) {
         console.error(err);
-        showToast('Import failed: ' + err.message);
+        showToast('Import failed: ' + esc(err.message));
       }
     };
     reader.readAsText(file);
@@ -114,8 +155,9 @@ export async function renderSettings(container) {
     navigator.storage.estimate().then(({ usage, quota }) => {
       const used = (usage / 1024 / 1024).toFixed(1);
       const total = (quota / 1024 / 1024).toFixed(0);
+      const pct = quota > 0 ? Math.round((usage / quota) * 100) : 0;
       const el = container.querySelector('#storage-text');
-      if (el) el.textContent = `${used} MB of ~${total} MB`;
+      if (el) el.textContent = `${used} MB of ~${total} MB (${pct}% used)`;
     });
   } else {
     const el = container.querySelector('#storage-text');

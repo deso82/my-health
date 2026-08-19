@@ -2,16 +2,12 @@
  * Family Health — app bootstrap, router, global helpers
  */
 import { openDB } from './db.js';
+import { esc } from './utils.js';
 import { renderHome } from './views/home.js';
 import { renderPersonPage, renderPersonForm, renderPeopleSettings } from './views/person.js';
 import { renderVisitForm } from './views/visit-form.js';
 import { renderVisitDetail } from './views/visit-detail.js';
 import { renderSettings } from './views/settings.js';
-
-// ── Service worker ────────────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(console.warn);
-}
 
 // ── Global helpers ────────────────────────────────────────────
 export function navigate(hash) {
@@ -19,10 +15,21 @@ export function navigate(hash) {
 }
 
 let _toastTimer = null;
-export function showToast(msg, duration = 2600) {
+/**
+ * Show a transient toast notification.
+ * @param {string} msg       Message text (plain, not HTML).
+ * @param {number} [duration=2600]  Auto-dismiss delay in ms.
+ * @param {{ label: string, fn: () => void } | null} [action=null]  Optional action button.
+ */
+export function showToast(msg, duration = 2600, action = null) {
   const el = document.getElementById('toast');
   if (!el) return;
-  el.textContent = msg;
+  if (action) {
+    el.innerHTML = `<span>${esc(msg)}</span><button class="toast-action">${esc(action.label)}</button>`;
+    el.querySelector('.toast-action').addEventListener('click', action.fn);
+  } else {
+    el.textContent = msg;
+  }
   el.hidden = false;
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => { el.hidden = true; }, duration);
@@ -34,10 +41,10 @@ export function confirm(message, confirmLabel = 'Confirm', cancelLabel = 'Cancel
     dlg.className = 'sheet';
     dlg.innerHTML = `
       <h2>Are you sure?</h2>
-      <p>${message}</p>
+      <p>${esc(message)}</p>
       <div class="form-actions">
-        <button class="btn" id="dlg-cancel">${cancelLabel}</button>
-        <button class="btn btn-danger" id="dlg-confirm">${confirmLabel}</button>
+        <button class="btn" id="dlg-cancel">${esc(cancelLabel)}</button>
+        <button class="btn btn-danger" id="dlg-confirm">${esc(confirmLabel)}</button>
       </div>
     `;
     document.body.appendChild(dlg);
@@ -95,7 +102,7 @@ async function route() {
       <div class="empty">
         <span class="big">⚠️</span>
         <h2>Something went wrong</h2>
-        <p>${err.message}</p>
+        <p>${esc(err.message)}</p>
         <a class="btn btn-primary" href="#/">Go home</a>
       </div>
     `;
@@ -108,6 +115,27 @@ async function route() {
 // ── Boot ─────────────────────────────────────────────────────
 async function boot() {
   await openDB();
+
+  // Register service worker; show a toast when a new version is waiting.
+  // IMPORTANT: bump CACHE in sw.js (e.g. fh-v1 → fh-v2) on each release to
+  // trigger the updatefound event that activates this notification.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // A previous SW was in control; a newer version is now installed and waiting.
+            showToast('App updated — reload to apply', 10000, {
+              label: 'Reload',
+              fn: () => location.reload(),
+            });
+          }
+        });
+      });
+    }).catch(console.warn);
+  }
+
   window.addEventListener('hashchange', route);
   await route();
 }
@@ -118,7 +146,7 @@ boot().catch(err => {
     <div class="empty">
       <span class="big">💔</span>
       <h2>Could not start app</h2>
-      <p>${err.message}</p>
+      <p>${esc(err.message)}</p>
     </div>
   `;
 });

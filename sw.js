@@ -2,6 +2,8 @@
  * Family Health — Service Worker
  * Strategy: cache-first for app shell, network-only for everything else.
  */
+// Bump CACHE on every release so the browser installs the new SW and fires
+// the 'updatefound' event, which triggers the "App updated — reload" toast.
 const CACHE = 'fh-v1';
 const SHELL = [
   './',

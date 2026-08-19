@@ -152,7 +152,7 @@ export async function renderPersonForm(container, personId) {
       <form class="form" id="person-form" novalidate>
         <div class="field">
           <label for="p-name">Name *</label>
-          <input class="input" id="p-name" name="name" type="text" placeholder="e.g. Maria" required autocomplete="name" value="${esc(existing?.name ?? '')}">
+          <input class="input" id="p-name" name="name" type="text" placeholder="e.g. Maria" required autocomplete="name" maxlength="200" value="${esc(existing?.name ?? '')}">
         </div>
         <div class="field">
           <label>Avatar emoji</label>
@@ -176,7 +176,7 @@ export async function renderPersonForm(container, personId) {
         </div>
         <div class="field">
           <label for="p-notes">Notes</label>
-          <textarea class="textarea" id="p-notes" name="notes" placeholder="Allergies, blood type, chronic conditions…">${esc(existing?.notes ?? '')}</textarea>
+          <textarea class="textarea" id="p-notes" name="notes" maxlength="2000" placeholder="Allergies, blood type, chronic conditions…">${esc(existing?.notes ?? '')}</textarea>
         </div>
         <div class="form-actions">
           <button type="button" class="btn" onclick="history.back()">Cancel</button>
