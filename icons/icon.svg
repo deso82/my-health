@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- background -->
+  <rect width="512" height="512" rx="112" fill="#0e8f84"/>
+  <!-- heart -->
+  <path d="M256 390 C256 390 110 300 110 200
+           C110 155 145 120 190 120
+           C215 120 238 134 256 160
+           C274 134 297 120 322 120
+           C367 120 402 155 402 200
+           C402 300 256 390 256 390Z"
+        fill="none" stroke="white" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- cross -->
+  <line x1="256" y1="185" x2="256" y2="245" stroke="white" stroke-width="24" stroke-linecap="round"/>
+  <line x1="226" y1="215" x2="286" y2="215" stroke="white" stroke-width="24" stroke-linecap="round"/>
+</svg>
