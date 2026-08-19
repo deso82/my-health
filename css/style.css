@@ -565,11 +565,20 @@ button {
   font-weight: 600;
   font-size: .92rem;
   box-shadow: var(--shadow-lift);
-  animation: toast-in .2s ease;
   text-align: center;
+  /* Default to hidden; display is only set when the element is visible. */
+  display: none;
+}
+
+/* Only apply flex layout and entrance animation when the toast is active
+   (hidden attribute removed). Prevents the empty pill from appearing as
+   a white artefact on mobile browsers that let display:flex leak through
+   the [hidden] attribute. */
+.toast:not([hidden]) {
   display: flex;
   align-items: center;
   gap: 12px;
+  animation: toast-in .2s ease;
 }
 
 /* Action button inside toast (e.g. "Reload" for SW updates) */
