@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <!-- Content Security Policy: no inline scripts/styles, same-origin only.
+       blob: and data: are required for photo display (createObjectURL + base64). -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'self';">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Family Health</title>
   <meta name="description" content="A private, offline-first portal to record medical checkups and appointments for your whole family.">

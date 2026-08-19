@@ -8,6 +8,7 @@ const DB_VERSION = 1;
 
 let _db = null;
 
+/** @returns {Promise<IDBDatabase>} The open database instance. */
 export function openDB() {
   if (_db) return Promise.resolve(_db);
   return new Promise((resolve, reject) => {
@@ -94,6 +95,7 @@ export const photos = {
 
 // ── Full export / import ─────────────────────────────────────
 
+/** @returns {Promise<{version:number, people:object[], visits:object[], photos:object[]}>} */
 export async function exportAll() {
   const [allPeople, allVisits, allPhotos] = await Promise.all([
     people.list(),
@@ -111,6 +113,11 @@ export async function exportAll() {
   return { version: 1, people: allPeople, visits: allVisits, photos: photosB64 };
 }
 
+/**
+ * Clear all stores and insert data from a backup object.
+ * @param {{version:number, people:object[], visits:object[], photos:object[]}} data
+ * @returns {Promise<void>}
+ */
 export async function importAll(data) {
   if (!data || data.version !== 1) throw new Error('Unrecognised backup format.');
   const db = await openDB();
@@ -134,6 +141,13 @@ export async function importAll(data) {
 
 // ── Image compression ────────────────────────────────────────
 
+/**
+ * Compress an image file to JPEG via canvas, capping the longest edge at maxDim.
+ * @param {File} file
+ * @param {number} [maxDim=1600]
+ * @param {number} [quality=0.82]
+ * @returns {Promise<Blob>}
+ */
 export function compressImage(file, maxDim = 1600, quality = 0.82) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -173,6 +187,7 @@ function base64ToBlob(b64, type = 'image/jpeg') {
   return new Blob([arr], { type });
 }
 
+/** @returns {string} A cryptographically random UUID v4 (available in all SW-capable browsers). */
 export function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  return crypto.randomUUID();
 }

@@ -26,12 +26,14 @@ export function personStyle(p) {
   return `--pc:${p.color}22;`;
 }
 
+/** @param {string} iso YYYY-MM-DD @returns {string} Human-readable date string. */
 export function formatDate(iso) {
   if (!iso) return '';
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+/** @param {string} iso YYYY-MM-DD @returns {string} Relative label like "3d ago" or "Yesterday". */
 export function relativeDate(iso) {
   if (!iso) return '';
   const diff = Math.floor((Date.now() - new Date(iso + 'T00:00:00')) / 86400000);
@@ -44,9 +46,17 @@ export function relativeDate(iso) {
 }
 
 export function esc(s) {
-  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  // Escape all HTML special characters including single quotes (&#39; preferred over &apos; for HTML4 compat).
+  // Backtick-delimited HTML attributes are non-standard so no browser parses them; no escape needed there.
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')   // must be first to avoid double-encoding
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
+/** @returns {string} Today's date as YYYY-MM-DD in local time. */
 export function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
