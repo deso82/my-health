@@ -246,7 +246,6 @@ export async function renderVisitForm(container, visitId, searchParams) {
         photos.put({ id: p.id, visitId: visit.id, blob: p.blob, kind: p.kind, name: p.name, addedAt: new Date().toISOString() })
       ));
 
-      showToast(isEdit ? 'Visit updated' : 'Visit saved');
       navigate(`#/visit/${visit.id}`);
     } catch (err) {
       console.error(err);

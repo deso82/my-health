@@ -219,7 +219,6 @@ export async function renderPersonForm(container, personId) {
       const btn = container.querySelector('#p-save');
       btn.disabled = true;
       await people.put(person);
-      showToast(isEdit ? 'Person updated' : `${name} added`);
       navigate(isEdit ? `#/person/${person.id}` : '#/');
     });
   };
