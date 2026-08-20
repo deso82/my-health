@@ -121,7 +121,6 @@ export async function renderSettings(container) {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-      showToast('Backup saved');
     } catch (err) {
       console.error(err);
       showToast('Export failed');
